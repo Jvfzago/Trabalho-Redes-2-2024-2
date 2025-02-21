@@ -50,10 +50,8 @@ class Roteador:
         return f"({self.name}): {self.ip} - {self.dataGrama}"
     
 class Packet:
-    def __init__(self, origem, destino):
-        self.origem = origem
-        self.destino = destino
-        self.tempo = 0
+    def __init__(self, tamanho):
+        self.tamanho = tamanho
 
 #----------------------------------
 roteadorRaiz = None
@@ -126,20 +124,38 @@ def criarListaIpsCaminho(ip):
     listaCaminhoIpDestino.append(ip)
     return listaCaminhoIpDestino
 
+def calcularTaxaTransmissao(roteador):
+    if roteador.name.startswith("A"):
+        return 100 * (10**9)  # 100 Gb/s
+    elif roteador.name.startswith("E"):
+        return 10 * (10**9)   # 10 Gb/s
+    elif roteador.name.startswith("H"):
+        return 50 * (10**6)   # 50 Mb/s
+    else:
+        return 1 * (10**9)    # Default: 1 Gb/s para outros
+    
+def calcular_tempo_transmissao(tamanho_bytes, taxa_bps):
+    tamanho_bits = tamanho_bytes * 8
+    tempo_segundos = tamanho_bits / taxa_bps
+    tempo_milisegundos = tempo_segundos * 1000
+    return tempo_milisegundos
 
 def enviarPacote(rotOrigem, rotDestino):
-    pacote = Packet
+    pac = Packet(32000)
     rotAtual = rotOrigem
     lstCaminhoIpDestino = criarListaIpsCaminho(rotDestino.ip)
     print(lstCaminhoIpDestino)
-
+    tempoCaminho = 0
     while(rotAtual != rotDestino):
         ipComum = set(lstCaminhoIpDestino) & set(rotAtual.dataGrama.keys())
         if (list(ipComum) != []):
             rotAtual = rotAtual.dataGrama[list(ipComum)[0]]
+            tempoCaminho += calcular_tempo_transmissao(pac.tamanho, calcularTaxaTransmissao(rotAtual))
         else:
+            tempoCaminho += calcular_tempo_transmissao(pac.tamanho, calcularTaxaTransmissao(rotAtual))
             rotAtual = rotAtual.roteadorPai
         print(rotAtual.ip)
+        print(tempoCaminho)
         
 
 
