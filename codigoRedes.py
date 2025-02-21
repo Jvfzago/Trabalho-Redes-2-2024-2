@@ -38,16 +38,16 @@ com no máximo 30 saltos:
 Rastreamento concluído.
 """
 class Roteador:
-    def __init__(self, name, ip, rotadorPai, taxaTransPai):
+    def __init__(self, name, ip, roteadorPai):
         self.name = name
         self.ip = ip
-        self.roteadorPai = rotadorPai
-        self.taxaTransPai = taxaTransPai
+        self.roteadorPai = roteadorPai
+        self.taxaTransPai = 0
         self.listaSubRedes = []
         self.dataGrama = {}
 
     def __str__(self):
-        return f"({self.name}): {self.ip}"
+        return f"({self.name}): {self.ip} - {self.dataGrama}"
     
 class Packet:
     def __init__(self, origem, destino):
@@ -64,24 +64,43 @@ def importarDefRede(endereco):
     with open(endereco, "r") as file:
         linhas = file.readlines()
 
-    name, ip, pai, taxa= linhas[0].strip().split("-")
-    roteadorRaiz = Roteador(name, ip, pai, taxa)
+    name, ip, pai= linhas[0].strip().split("-")
+    roteadorRaiz = Roteador(name, ip, pai)
     listaRoteadores.append(roteadorRaiz)
 
     for linha in linhas[1:]:
-        name, ip, pai, taxa = linha.strip().split("-")
-        rot = Roteador(name, ip, listaRoteadores(pai), taxa)
+        name, ip, pai = linha.strip().split("-")
+        roteadorEncontrado = next((r for r in listaRoteadores if r.name == pai), None)
+        rot = Roteador(name, ip, roteadorEncontrado)
         listaRoteadores.append(rot)
+        if(roteadorEncontrado != None):
+          roteadorEncontrado.listaSubRedes.append(rot)    
+        
 
     return roteadorRaiz
 
-def getListaIP(ip):
+
+
+def getIPToList(ip):
     return [octeto for octeto in [ip.split(".")]]
+
+def getListToIP(list):
+    return ".".join(list)
 
 
 def criarDatagramas(lstRoteadores):
     for rot in lstRoteadores:
-        pass
+        # ipDescida = rot.ip.replace("0","*")
+        # ipDescidaLst = getIPToList(ipDescida)
+        # # octetoFilhos = 4 - ipDescida.count("*")
+        for rotFilho in rot.listaSubRedes:
+            ipFilhoLista = getIPToList(rotFilho.ip)
+            for oct in ipFilhoLista:
+                if oct == "0":
+                    oct = "*"
+            print(ipFilhoLista)
+            ipFilho = getListToIP(ipFilhoLista)
+            rot.dataGrama.update({ipFilho, rotFilho})
 
 
 
@@ -93,8 +112,10 @@ def criarDatagramas(lstRoteadores):
 
 
 roteadorRaiz = importarDefRede("Trabalho-Redes-2-2024-2/defRede.txt")
+criarDatagramas(listaRoteadores)
 
-print(roteadorRaiz)
+for rot in listaRoteadores:
+    print(rot)
 
 
 
