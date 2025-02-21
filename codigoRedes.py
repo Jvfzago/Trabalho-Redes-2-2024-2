@@ -2,41 +2,6 @@
 #Aluno: João Vitor Frabis Zago 242039256
 #Aluno: Leandro Coelho da Silva
 
-"""
- ping youtube.com
-
-Disparando youtube.com [2800:3f0:4004:809::200e] com 32 bytes de dados:
-Resposta de 2800:3f0:4004:809::200e: tempo=31ms
-Resposta de 2800:3f0:4004:809::200e: tempo=26ms
-Resposta de 2800:3f0:4004:809::200e: tempo=24ms
-Resposta de 2800:3f0:4004:809::200e: tempo=27ms
-
-Estatísticas do Ping para 2800:3f0:4004:809::200e:
-    Pacotes: Enviados = 4, Recebidos = 4, Perdidos = 0 (0% de
-             perda),
-Aproximar um número redondo de vezes em milissegundos:
-    Mínimo = 24ms, Máximo = 31ms, Média = 27ms
-"""
-
-"""
- TRACERT youtube.com
-
-Rastreando a rota para youtube.com [2800:3f0:4004:809::200e]
-com no máximo 30 saltos:
-
-  1     1 ms     1 ms     1 ms  2804:14c:6586:437d:0:ff:fe00:4
-  2     *        *        *     Esgotado o tempo limite do pedido.
-  3    15 ms    14 ms    11 ms  2804:14c:6500:a12::1
-  4    11 ms    12 ms    12 ms  2804:a8:2:88::1851
-  5     *        *        *     Esgotado o tempo limite do pedido.
-  6    32 ms     *        *     2804:a8:2:b0::13d6
-  7    27 ms    26 ms    26 ms  2800:3f0:8016::1
-  8     *        *        *     Esgotado o tempo limite do pedido.
-  9    30 ms    34 ms    30 ms  2001:4860:0:1::3d3d
- 10    26 ms    26 ms    27 ms  2800:3f0:4004:809::200e
-
-Rastreamento concluído.
-"""
 class Roteador:
     def __init__(self, name, ip, roteadorPai):
         self.name = name
@@ -100,18 +65,6 @@ def criarDatagramas(lstRoteadores):
 roteadorRaiz = importarDefRede("Trabalho-Redes-2-2024-2/defRede.txt")
 criarDatagramas(listaRoteadores)
 
-# for rot in listaRoteadores:
-#     print(rot)
-
-
-
-"""
-              o1
-          /         \
-       a1             a2
-      /|\\           /|\\
-   e1 e2 e3 e4   e5 e6 e7 e8
-"""
 
 #------------------------------------
 hostAtual = None
@@ -144,8 +97,9 @@ def enviarPacote(rotOrigem, rotDestino):
     pac = Packet(32000)
     rotAtual = rotOrigem
     lstCaminhoIpDestino = criarListaIpsCaminho(rotDestino.ip)
-    print(lstCaminhoIpDestino)
+
     tempoCaminho = 0
+    lstCaminho = []
     while(rotAtual != rotDestino):
         ipComum = set(lstCaminhoIpDestino) & set(rotAtual.dataGrama.keys())
         if (list(ipComum) != []):
@@ -154,22 +108,76 @@ def enviarPacote(rotOrigem, rotDestino):
         else:
             tempoCaminho += calcular_tempo_transmissao(pac.tamanho, calcularTaxaTransmissao(rotAtual))
             rotAtual = rotAtual.roteadorPai
-        print(rotAtual.ip)
-        print(tempoCaminho)
-        
+        lstCaminho.append(rotAtual.ip)
+
+    rotDestino, rotOrigem = rotOrigem, rotDestino
+    rotAtual = rotOrigem
+    lstCaminhoIpDestino = criarListaIpsCaminho(rotDestino.ip)
+
+    while(rotAtual != rotDestino):
+        ipComum = set(lstCaminhoIpDestino) & set(rotAtual.dataGrama.keys())
+        if (list(ipComum) != []):
+            rotAtual = rotAtual.dataGrama[list(ipComum)[0]]
+            tempoCaminho += calcular_tempo_transmissao(pac.tamanho, calcularTaxaTransmissao(rotAtual))
+        else:
+            tempoCaminho += calcular_tempo_transmissao(pac.tamanho, calcularTaxaTransmissao(rotAtual))
+            rotAtual = rotAtual.roteadorPai
+
+    return tempoCaminho, lstCaminho
 
 
+    
 def ping(hostDestino):
     global hostAtual
-    tempoPacoteAtual = 0
-    for i in range(0,4):
-        pacote = Packet()
+    tempos_resposta = []
+    pacotes_enviados = 0
+    pacotes_recebidos = 0
+
+    print(f"Disparando {hostDestino.ip} [IP_SIMULADO] com 32.000 bytes de dados:")
+
+    for i in range(4):
+        pacotes_enviados += 1
+        tempoPacoteAtual, dictCaminho = enviarPacote(hostAtual, hostDestino)
+        tempos_resposta.append(tempoPacoteAtual)
+        pacotes_recebidos += 1
+        print(f"Resposta de {hostDestino.ip}: tempo={tempoPacoteAtual:.5f}ms")
+
+    pacotes_perdidos = pacotes_enviados - pacotes_recebidos
+    tempo_minimo = min(tempos_resposta)
+    tempo_maximo = max(tempos_resposta)
+    tempo_medio = sum(tempos_resposta) / len(tempos_resposta)
+
+    print("\nEstatísticas do Ping para", hostDestino.ip + ":")
+    print(f"    Pacotes: Enviados = {pacotes_enviados}, Recebidos = {pacotes_recebidos}, Perdidos = {pacotes_perdidos} ({(pacotes_perdidos/pacotes_enviados)*100}% de perda),")
+    print(f"Aproximar um número redondo de vezes em milissegundos:")
+    print(f"    Mínimo = {tempo_minimo:.5f}ms, Máximo = {tempo_maximo:.5f}ms, Média = {tempo_medio:.2f}ms")
 
 
 def traceroute(hostDestino):
-    pass
+    global hostAtual
+    global listaRoteadores
+    max_saltos = 30
+    saltos = []
 
-ipOrigem = "1.1.4.15"
+    # Exibe o IP de destino simulado
+    print(f"Rastreando a rota para {hostDestino.ip} com no máximo {max_saltos} saltos:")
+
+    temp, lstCaminho = enviarPacote(hostAtual, hostDestino)
+    for ipInter in lstCaminho:
+        rotInter = next((r for r in listaRoteadores if r.ip == ipInter))
+        tempos = []
+        for i in range(3):
+            tempo , temp = enviarPacote(hostAtual, rotInter)
+            tempos.append(tempo)
+        print(f"  {i+1}    {tempos[0]:.5f} ms   {tempos[1]:.5f} ms   {tempos[2]:.5f} ms  {ipInter}")
+    
+    print(f"Rastreamento concluído.")
+
+ipAtual = "1.1.4.15"
+hostAtual = next((r for r in listaRoteadores if r.ip == ipAtual))
 ipDestino = "1.2.7.12"
-print
-enviarPacote(next((r for r in listaRoteadores if r.ip == ipOrigem)),next((r for r in listaRoteadores if r.ip == ipDestino)))
+hostDestino = next((r for r in listaRoteadores if r.ip == ipDestino))
+
+ping(hostDestino)
+print("\n---------------------------------------\n")
+traceroute(hostDestino)
