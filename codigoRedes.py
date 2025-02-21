@@ -2,6 +2,9 @@
 #Aluno: João Vitor Frabis Zago 242039256
 #Aluno: Leandro Coelho da Silva
 
+import os  # Para limpar o terminal
+import time
+
 class Roteador:
     def __init__(self, name, ip, roteadorPai):
         self.name = name
@@ -12,14 +15,14 @@ class Roteador:
         self.dataGrama = {}
 
     def __str__(self):
-        return f"({self.name}): {self.ip} - {self.dataGrama}"
+        return f"{self.ip}"
     
 class Packet:
     def __init__(self, tamanho):
         self.tamanho = tamanho
 
 #----------------------------------
-roteadorRaiz = None
+
 listaRoteadores = []
 
 def importarDefRede(endereco):
@@ -42,14 +45,13 @@ def importarDefRede(endereco):
 
     return roteadorRaiz
 
-
+#----------------------------------------
 
 def getIPToList(ip):
     return ip.split(".")
 
 def getListToIP(list):
     return ".".join(list)
-
 
 def criarDatagramas(lstRoteadores):
     for rot in lstRoteadores:
@@ -62,12 +64,8 @@ def criarDatagramas(lstRoteadores):
             rot.dataGrama.update({ipFilho: rotFilho})
 
 
-roteadorRaiz = importarDefRede("Trabalho-Redes-2-2024-2/defRede.txt")
-criarDatagramas(listaRoteadores)
-
-
 #------------------------------------
-hostAtual = None
+
 
 def criarListaIpsCaminho(ip):
     ipList = getIPToList(ip)
@@ -125,10 +123,9 @@ def enviarPacote(rotOrigem, rotDestino):
 
     return tempoCaminho, lstCaminho
 
-
+#----------------------------------------
     
-def ping(hostDestino):
-    global hostAtual
+def ping(hostAtual, hostDestino):
     tempos_resposta = []
     pacotes_enviados = 0
     pacotes_recebidos = 0
@@ -153,8 +150,7 @@ def ping(hostDestino):
     print(f"    Mínimo = {tempo_minimo:.5f}ms, Máximo = {tempo_maximo:.5f}ms, Média = {tempo_medio:.2f}ms")
 
 
-def traceroute(hostDestino):
-    global hostAtual
+def traceroute(hostAtual, hostDestino):
     global listaRoteadores
     max_saltos = 30
     saltos = []
@@ -173,11 +169,86 @@ def traceroute(hostDestino):
     
     print(f"Rastreamento concluído.")
 
-ipAtual = "1.1.4.15"
-hostAtual = next((r for r in listaRoteadores if r.ip == ipAtual))
-ipDestino = "1.2.7.12"
-hostDestino = next((r for r in listaRoteadores if r.ip == ipDestino))
+#----------------------------------------
+# ipAtual = "1.1.4.15"
+# hostAtual = next((r for r in listaRoteadores if r.ip == ipAtual))
+# ipDestino = "1.2.7.12"
+# hostDestino = next((r for r in listaRoteadores if r.ip == ipDestino))
 
-ping(hostDestino)
-print("\n---------------------------------------\n")
-traceroute(hostDestino)
+# ping(hostDestino)
+# print("\n---------------------------------------\n")
+# traceroute(hostDestino)
+
+#----------------------------------------
+
+def mostrarMenu(hostAtual):
+    print("\n=== MENU ===")
+    print(f"Host atual: {hostAtual}")
+    print("1. Executar Ping")
+    print("2. Executar Traceroute")
+    print("3. Trocar Host Atual")
+    print("4. Sair")
+    opcao = input("Escolha uma opção (1/2/3/4): ")
+    return opcao
+
+def limparTela():
+    os.system('cls' if os.name == 'nt' else 'clear')
+
+def esperar():
+    input("\nPressione Enter para continuar...")
+
+# Função principal do game loop
+def gameLoop():
+    global hostAtual
+    print("Iniciando o programa...")
+    time.sleep(1)
+    
+    # Carregar configurações de rede (simulado)
+    print("Configurando rede...")
+    importarDefRede("Trabalho-Redes-2-2024-2/defRede.txt")
+    criarDatagramas(listaRoteadores)
+
+    time.sleep(1)
+    # Exemplo: Carregar lista de roteadores e hosts de configuração
+    # listaRoteadores = importarDefRede("configuracoes.txt")
+    # Para o exemplo, vou manter uma variável fixa para o host de origem.
+    hostAtual = "1.1.4.15"  # Exemplo de host de origem
+    hostAtual = next((r for r in listaRoteadores if r.ip == hostAtual))
+    print(f"Host atual: {hostAtual}")
+    time.sleep(2)
+    while True:
+        limparTela()  # Limpar a tela a cada iteração para mostrar um menu limpo
+        opcao = mostrarMenu(hostAtual)
+
+        if opcao == '1':  # Ping
+            
+            ipDestino = input("Digite o IP host de destino para o Ping: ")
+            hostDestino = next((r for r in listaRoteadores if r.ip == ipDestino))
+            ping(hostAtual, hostDestino)  # Chamando a função ping (já definida anteriormente)
+            esperar()
+
+        elif opcao == '2':  # Traceroute
+            
+            ipDestino = input("Digite o IP do host de destino para o Traceroute: ")
+            hostDestino = next((r for r in listaRoteadores if r.ip == ipDestino))
+            traceroute(hostAtual, hostDestino)  # Chamando a função traceroute (já definida anteriormente)
+            esperar()
+            
+
+        elif opcao == '3':  # Trocar Host Atual
+            novoHostIP = input("Digite o novo host atual: ")
+            hostAtual = next((r for r in listaRoteadores if r.ip == novoHostIP))
+            print(f"Host atual trocado para: {hostAtual.ip}")
+            time.sleep(2)  # Pausar um pouco antes de continuar o loop
+
+        elif opcao == '4':  # Sair
+            print("Encerrando o programa...")
+            time.sleep(2)
+            break  # Encerra o loop e termina o programa
+
+        else:
+            print("Opção inválida! Por favor, escolha uma opção válida.")
+            time.sleep(1)  # Pausar antes de continuar o loop
+
+if __name__ == "__main__":
+    gameLoop()
