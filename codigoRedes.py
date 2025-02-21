@@ -82,7 +82,7 @@ def importarDefRede(endereco):
 
 
 def getIPToList(ip):
-    return [octeto for octeto in [ip.split(".")]]
+    return ip.split(".")
 
 def getListToIP(list):
     return ".".join(list)
@@ -90,32 +90,20 @@ def getListToIP(list):
 
 def criarDatagramas(lstRoteadores):
     for rot in lstRoteadores:
-        # ipDescida = rot.ip.replace("0","*")
-        # ipDescidaLst = getIPToList(ipDescida)
-        # # octetoFilhos = 4 - ipDescida.count("*")
         for rotFilho in rot.listaSubRedes:
             ipFilhoLista = getIPToList(rotFilho.ip)
-            for oct in ipFilhoLista:
-                if oct == "0":
-                    oct = "*"
-            print(ipFilhoLista)
+            for i in range(len(ipFilhoLista)):
+                if ipFilhoLista[i] == "0":
+                    ipFilhoLista[i] = "*"
             ipFilho = getListToIP(ipFilhoLista)
-            rot.dataGrama.update({ipFilho, rotFilho})
-
-
-
-
-
-
-    
-
+            rot.dataGrama.update({ipFilho: rotFilho})
 
 
 roteadorRaiz = importarDefRede("Trabalho-Redes-2-2024-2/defRede.txt")
 criarDatagramas(listaRoteadores)
 
-for rot in listaRoteadores:
-    print(rot)
+# for rot in listaRoteadores:
+#     print(rot)
 
 
 
@@ -130,12 +118,29 @@ for rot in listaRoteadores:
 #------------------------------------
 hostAtual = None
 
+def criarListaIpsCaminho(ip):
+    ipList = getIPToList(ip)
+    listaCaminhoIpDestino = []
+    listaCaminhoIpDestino.append(f"{ipList[0]}.{ipList[1]}.*.*")
+    listaCaminhoIpDestino.append(f"{ipList[0]}.{ipList[1]}.{ipList[2]}.*")
+    listaCaminhoIpDestino.append(ip)
+    return listaCaminhoIpDestino
 
-def enviarPacote(rotArigem, rotDestino):
+
+def enviarPacote(rotOrigem, rotDestino):
     pacote = Packet
-    rotAtual = rotArigem
+    rotAtual = rotOrigem
+    lstCaminhoIpDestino = criarListaIpsCaminho(rotDestino.ip)
+    print(lstCaminhoIpDestino)
+
     while(rotAtual != rotDestino):
-        rotAtual.dataGrama
+        ipComum = set(lstCaminhoIpDestino) & set(rotAtual.dataGrama.keys())
+        if (list(ipComum) != []):
+            rotAtual = rotAtual.dataGrama[list(ipComum)[0]]
+        else:
+            rotAtual = rotAtual.roteadorPai
+        print(rotAtual.ip)
+        
 
 
 def ping(hostDestino):
@@ -148,3 +153,7 @@ def ping(hostDestino):
 def traceroute(hostDestino):
     pass
 
+ipOrigem = "1.1.4.15"
+ipDestino = "1.2.7.12"
+print
+enviarPacote(next((r for r in listaRoteadores if r.ip == ipOrigem)),next((r for r in listaRoteadores if r.ip == ipDestino)))
