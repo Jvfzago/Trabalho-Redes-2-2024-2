@@ -1,6 +1,6 @@
 #Trabalho de Redes 2 2024/2
 #Aluno: João Vitor Frabis Zago 242039256
-#Aluno: Leandro Coelho da Silva
+#Aluno: Leandro Coelho da Silva 232011396
 
 import os  # Para limpar o terminal
 import time
