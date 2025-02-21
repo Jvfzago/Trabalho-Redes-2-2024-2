@@ -38,33 +38,50 @@ com no máximo 30 saltos:
 Rastreamento concluído.
 """
 class Roteador:
-    def __init__(self, name, ip, rotadorPai):
+    def __init__(self, name, ip, rotadorPai, taxaTransPai):
         self.name = name
         self.ip = ip
         self.roteadorPai = rotadorPai
+        self.taxaTransPai = taxaTransPai
         self.listaSubRedes = []
+        self.dataGrama = {}
 
     def __str__(self):
         return f"({self.name}): {self.ip}"
     
 class Packet:
-    size = 32
+    def __init__(self, origem, destino):
+        self.origem = origem
+        self.destino = destino
+        self.tempo = 0
 
 #----------------------------------
 roteadorRaiz = None
+listaRoteadores = []
 
 def importarDefRede(endereco):
+    global listaRoteadores
     with open(endereco, "r") as file:
         linhas = file.readlines()
 
-    name, ip, pai = linhas[0].strip().split("-")
-    roteadorRaiz = Roteador(name, ip, pai)
+    name, ip, pai, taxa= linhas[0].strip().split("-")
+    roteadorRaiz = Roteador(name, ip, pai, taxa)
+    listaRoteadores.append(roteadorRaiz)
 
     for linha in linhas[1:]:
-        name, ip, pai = linha.strip().split("-")
-        Roteador(name, ip, pai)
+        name, ip, pai, taxa = linha.strip().split("-")
+        rot = Roteador(name, ip, listaRoteadores(pai), taxa)
+        listaRoteadores.append(rot)
 
     return roteadorRaiz
+
+def getListaIP(ip):
+    return [octeto for octeto in [ip.split(".")]]
+
+
+def criarDatagramas(lstRoteadores):
+    for rot in lstRoteadores:
+        pass
 
 
 
@@ -76,14 +93,11 @@ def importarDefRede(endereco):
 
 
 roteadorRaiz = importarDefRede("Trabalho-Redes-2-2024-2/defRede.txt")
-# o1 = Roteador("o1", [1,0,0,0], None)
+
 print(roteadorRaiz)
 
 
 
-# a1 = Roteador("a1", [1,1,0,0], o1)
-# o1.listaSubRedes.append(a1)
-# print(o1.listaSubRedes[0])
 """
               o1
           /         \
@@ -93,9 +107,22 @@ print(roteadorRaiz)
 """
 
 #------------------------------------
+hostAtual = None
+
+
+def enviarPacote(rotArigem, rotDestino):
+    pacote = Packet
+    rotAtual = rotArigem
+    while(rotAtual != rotDestino):
+        rotAtual.dataGrama
+
 
 def ping(hostDestino):
-    pass
+    global hostAtual
+    tempoPacoteAtual = 0
+    for i in range(0,4):
+        pacote = Packet()
+
 
 def traceroute(hostDestino):
     pass
