@@ -205,7 +205,7 @@ def gameLoop():
     
     # Carregar configurações de rede (simulado)
     print("Configurando rede...")
-    importarDefRede("Trabalho-Redes-2-2024-2/defRede.txt")
+    importarDefRede("defRede.txt")
     criarDatagramas(listaRoteadores)
 
     time.sleep(1)
